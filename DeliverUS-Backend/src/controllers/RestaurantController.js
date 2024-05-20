@@ -1,5 +1,5 @@
 import { Restaurant, Product, RestaurantCategory, ProductCategory } from '../models/models.js'
-
+import Sequelize from 'sequelize'
 const index = async function (req, res) {
   try {
     const restaurants = await Restaurant.findAll(
@@ -95,12 +95,42 @@ const destroy = async function (req, res) {
   }
 }
 
+const economico = async function (req, res) {
+  try {
+    const restaurantProducts = await Product.findAll(
+      { where: { restaurantId: { [Sequelize.Op.ne]: req.params.restaurantId } } })
+    const allProducts = await Product.findAll(
+      { where: { restaurantId: req.params.restaurantId } })
+    const avgRestaurantPrice = _getAvgPriceProducts(restaurantProducts)
+    const avgTotalPrice = _getAvgPriceProducts(allProducts)
+    const restaurantToWorkIn = await Restaurant.findByPk(req.params.restaurantId)
+    if (avgRestaurantPrice < avgTotalPrice) {
+      restaurantToWorkIn.economico = false
+    } else {
+      restaurantToWorkIn.economico = true
+    }
+    const restaurant = await restaurantToWorkIn.save()
+    res.json(restaurant)
+  } catch (err) {
+    res.status(500).send(err)
+  }
+}
+
+const _getAvgPriceProducts = function (products) {
+  let sum = 0
+  for (let i = 0; i < products.length; i++) {
+    sum += products[i].price
+  }
+  return sum / products.length
+}
+
 const RestaurantController = {
   index,
   indexOwner,
   create,
   show,
   update,
-  destroy
+  destroy,
+  economico
 }
 export default RestaurantController

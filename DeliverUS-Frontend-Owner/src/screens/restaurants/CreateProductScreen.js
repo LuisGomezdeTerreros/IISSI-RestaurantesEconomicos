@@ -12,6 +12,7 @@ import DropDownPicker from 'react-native-dropdown-picker'
 import * as yup from 'yup'
 import { ErrorMessage, Formik } from 'formik'
 import TextError from '../../components/TextError'
+import { economico } from '../../api/RestaurantEndpoints'
 
 export default function CreateProductScreen ({ navigation, route }) {
   const [open, setOpen] = useState(false)
@@ -82,13 +83,14 @@ export default function CreateProductScreen ({ navigation, route }) {
     setBackendErrors([])
     try {
       const createdProduct = await create(values)
+      await economico(values.restaurantId)
       showMessage({
         message: `Product ${createdProduct.name} succesfully created`,
         type: 'success',
         style: GlobalStyles.flashStyle,
         titleStyle: GlobalStyles.flashTextStyle
       })
-      navigation.navigate('RestaurantDetailScreen', { id: route.params.id, dirty: true })
+      navigation.navigate('RestaurantDetailScreen', { id: route.params.id, refresh: true })
     } catch (error) {
       console.log(error)
       setBackendErrors(error.errors)
